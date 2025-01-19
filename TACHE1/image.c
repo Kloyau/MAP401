@@ -230,8 +230,24 @@ Image lire_fichier_image(char *nom_f)
 /* ecrire l'image I � l'ecran */
 void ecrire_image(Image I)
 {
-	
-	/** PARTIE A COMPLETER **/
+	UINT x = largeur_image(I);
+	UINT y = hauteur_image(I);
+
+	for (int i = 1; i <= x; i++){
+
+		for (int j = 1; j<=y;j++){
+
+			if (get_pixel_image(I,i,j)== BLANC){
+				printf("0");
+			}
+
+			else{
+				printf("1");
+			}
+		}
+
+		printf("\n");
+	}
 	
 }
 
@@ -244,13 +260,15 @@ Image negatif_image(Image I)
 	UINT y = hauteur_image(I);
 	Image negatif = creer_image(x,y);
 	
-	for (int i = 1, j = 1; i <= x && j <= y; i++, j++){
-		Pixel p = get_pixel_image(I,i,j);
-		if (p == BLANC){
-			set_pixel_image(negatif,i,j,NOIR);
-		}
-		else{
-			set_pixel_image(negatif,i,j,BLANC);
+	for (int i = 1; i <= x; i++){
+		for (int j = 1; j<=y;j++){
+			Pixel p = get_pixel_image(I,i,j);
+			if (p == BLANC){
+				set_pixel_image(negatif,i,j,NOIR);
+			}
+			else{
+				set_pixel_image(negatif,i,j,BLANC);
+			}
 		}
 	}
 	return negatif;
