@@ -80,7 +80,7 @@ UINT hauteur_image(Image I)
    un message 
    version acceptant les fichiers avec 
    - ligne 1 : P1
-   - zero, une ou plusieurs lignes commençant toutes par #
+   - zero, une ou plusieurs lignes commenï¿½ant toutes par #
    - zero, un ou plusieurs separateurs
    - la largeur
    - un ou plusieurs separateurs
@@ -92,17 +92,17 @@ UINT hauteur_image(Image I)
 /* teste si le fichier d'identificateur f debute par un en-tete
    valide pour un fichier PBM :
    - ligne 1 : P1
-   - suivie de zero, une ou plusieurs lignes commençant toutes par #
+   - suivie de zero, une ou plusieurs lignes commenï¿½ant toutes par #
    La fonction se termine correctement si le fichier est correct, 
-   et le pointeur de fichier se trouve à la suite de l'entete.
+   et le pointeur de fichier se trouve ï¿½ la suite de l'entete.
    Sinon, l'execution du programme est arretee avec l'affichage d'un message
-   d'erreur (appel à ERREUR_FATALE)
+   d'erreur (appel ï¿½ ERREUR_FATALE)
     */ 
 void entete_fichier_pbm(FILE *f)
 {
 	char *ligne;
 	size_t n;
-	ssize_t l_ligne;
+	size_t l_ligne;
 
 	/* se positionner en debut de fichier */
 	fseek(f, 0, SEEK_SET);
@@ -128,7 +128,7 @@ void entete_fichier_pbm(FILE *f)
 	}
 	free(ligne);
 	
-	/* lecture des eventuelles lignes commençant par # */
+	/* lecture des eventuelles lignes commenï¿½ant par # */
 	BOOL boucle_ligne_commentaire = TRUE;
 	do
 	{
@@ -138,7 +138,7 @@ void entete_fichier_pbm(FILE *f)
 			ERREUR_FATALE("entete_fichier_pbm : fin fichier inattendue\n");
 		}
 		
-		/* lire un caractere et tester par rapport à '#' */
+		/* lire un caractere et tester par rapport ï¿½ '#' */
 		char c;
 		fscanf(f, "%c", &c);
 		if (c=='#')
@@ -151,7 +151,7 @@ void entete_fichier_pbm(FILE *f)
 		}
 		else
 		{
-			/* reculer d'un caractère dans f */
+			/* reculer d'un caractï¿½re dans f */
 			fseek(f, -1, SEEK_CUR);
 			boucle_ligne_commentaire = FALSE;
 		}
@@ -227,7 +227,7 @@ Image lire_fichier_image(char *nom_f)
 	return I;
 }
 
-/* ecrire l'image I à l'ecran */
+/* ecrire l'image I ï¿½ l'ecran */
 void ecrire_image(Image I)
 {
 	
@@ -240,7 +240,18 @@ void ecrire_image(Image I)
 /* la fonction renvoie l'image "negatif" de I */
 Image negatif_image(Image I)
 {
+	UINT x = largeur_image(I);
+	UINT y = hauteur_image(I);
+	Image negatif = creer_image(x,y);
 	
-	/** PARTIE A COMPLETER **/
-	
+	for (int i = 1, j = 1; i <= x && j <= y; i++, j++){
+		Pixel p = get_pixel_image(I,i,j);
+		if (p == BLANC){
+			set_pixel_image(negatif,i,j,NOIR);
+		}
+		else{
+			set_pixel_image(negatif,i,j,BLANC);
+		}
+	}
+	return negatif;
 }
