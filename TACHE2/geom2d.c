@@ -1,6 +1,7 @@
 /*---------------- Dépendances ----------------*/
 
 #include <stdio.h>
+#include <math.h>
 
 
 /*---------------- Structures ----------------*/
@@ -140,6 +141,8 @@ double dist(Point p1, Point p2){
 /*---------------- Tests ----------------*/
 
 int main(){
-  printf("caca");
+  printf("caca\n");
+  
   return 0;
+
 }
