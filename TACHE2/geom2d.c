@@ -141,8 +141,41 @@ double dist(Point p1, Point p2){
 /*---------------- Tests ----------------*/
 
 int main(){
-  printf("caca\n");
-  
+  Vecteur v1 = {2.0, 3.5};
+  Vecteur v2 = {0.0, 2.0};
+  Point p1 = {5.0, 6.5};
+  Point p2 = {2.0, 1.5};
+
+  Vecteur v3 = new_vect_xy(1.0, 2.0);
+  printf("new_vect_xy: (%.2f, %.2f)\n", v3.x, v3.y);
+
+  Vecteur v4 = new_vect_2pts(p1, p2);
+  printf("new_vect_2pts: (%.2f, %.2f)\n", v4.x, v4.y);
+
+  Vecteur v5 = somme_vect(v1, v2);
+  printf("somme_vect: (%.2f, %.2f)\n", v5.x, v5.y);
+
+  Vecteur v6 = aVect(2.0, v1);
+  printf("aVect: (%.2f, %.2f)\n", v6.x, v6.y);
+
+  double scal = pscalaire(v1, v2);
+  printf("pscalare: %.2f\n", scal);
+
+  double length = len(v1);
+  printf("len: %.2f\n", length);
+
+  Point p3 = new_pts(3.0, 4.0);
+  printf("new_pts: (%.2f, %.2f)\n", p3.x, p3.y);
+
+  Point p4 = somme_pts(p1, p2);
+  printf("somme_pts: (%.2f, %.2f)\n", p4.x, p4.y);
+
+  Point p5 = aPts(2.0, p1);
+  printf("aPts: (%.2f, %.2f)\n", p5.x, p5.y);
+
+  double distance = dist(p1, p2);
+  printf("dist: %.2f\n", distance);
+
   return 0;
 
 }
