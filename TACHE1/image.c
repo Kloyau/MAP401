@@ -233,16 +233,16 @@ void ecrire_image(Image I)
 	UINT x = largeur_image(I);
 	UINT y = hauteur_image(I);
 
-	for (int i = 1; i <= x; i++){
+	for (int i = 1; i <= y; i++){
 
-		for (int j = 1; j<=y;j++){
+		for (int j = 1; j<=x;j++){
 
-			if (get_pixel_image(I,i,j)== BLANC){
-				printf("0");
+			if (get_pixel_image(I,j,i) == BLANC){
+				printf(" ");
 			}
 
 			else{
-				printf("1");
+				printf("X");
 			}
 		}
 
