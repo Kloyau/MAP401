@@ -1,5 +1,5 @@
 /****************************************************************************** 
-  Interface du module image
+Interface du module image
 ******************************************************************************/
 
 #ifndef _IMAGE_H_
@@ -25,12 +25,12 @@ exit(1); \
 #endif
 
 /* 
- Type enuméré Pixel équivalent au char avec BLANC=0 et NOIR=1
+Type enumï¿½rï¿½ Pixel ï¿½quivalent au char avec BLANC=0 et NOIR=1
  */
 typedef enum {BLANC=0,NOIR=1} Pixel;
 
 /* 
- Type Image
+Type Image
  */
 typedef struct Image_
 {
@@ -39,7 +39,7 @@ typedef struct Image_
 	Pixel* pointeur_vers_le_tableau_de_pixels; 
 } Image;
 
-/* création d'une image PBM de dimensions L x H avec tous les pixels blancs */
+/* crï¿½ation d'une image PBM de dimensions L x H avec tous les pixels blancs */
 Image creer_image(UINT L, UINT H);
 
 /* suppression de l'image I = *p_I */
@@ -59,22 +59,22 @@ UINT largeur_image(Image I);
 /* renvoie la hauteur de l'image I */
 UINT hauteur_image(Image I);
 
-/* lire l'image dans le fichier nommé nom_f
+/* lire l'image dans le fichier nommï¿½ nom_f
    s'il y a une erreur dans le fichier le programme s'arrete en affichant
    un message 
    version acceptant les fichiers avec 
    - ligne 1 : P1
-   - zero, une ou plusieurs lignes commençant toutes par #
-   - zero, un ou plusieurs séparateurs
+   - zero, une ou plusieurs lignes commenï¿½ant toutes par #
+   - zero, un ou plusieurs sï¿½parateurs
    - la largeur
-   - un ou plusieurs séparateurs
+   - un ou plusieurs sï¿½parateurs
    - la hauteur
-   - un ou plusieurs séparateurs
+   - un ou plusieurs sï¿½parateurs
    - les pixels de l'image
    */
 Image lire_fichier_image(char *nom_f);
 
-/* écrire l'image I à l'écran */
+/* ï¿½crire l'image I ï¿½ l'ï¿½cran */
 void ecrire_image(Image I);
 
 /* calculer l'image "negatif" de l'image I */

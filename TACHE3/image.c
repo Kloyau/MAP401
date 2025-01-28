@@ -196,7 +196,7 @@ Image lire_fichier_image(char *nom_f)
 	I = creer_image(L,H);
 	
 	/* lecture des pixels du fichier 
-	   seuls les caracteres '0' (BLANC) ou '1' (NOIR) 
+	seuls les caracteres '0' (BLANC) ou '1' (NOIR) 
 	   doivent etre pris en compte */
 	x = 1; y = 1;
 	while (!feof(f) && y<=H)
@@ -230,8 +230,8 @@ Image lire_fichier_image(char *nom_f)
 /* ecrire l'image I � l'ecran */
 void ecrire_image(Image I)
 {
-	UINT x = largeur_image(I);
-	UINT y = hauteur_image(I);
+	int x = largeur_image(I);
+	int y = hauteur_image(I);
 
 	for (int i = 1; i <= y; i++){
 
@@ -256,8 +256,8 @@ void ecrire_image(Image I)
 /* la fonction renvoie l'image "negatif" de I */
 Image negatif_image(Image I)
 {
-	UINT x = largeur_image(I);
-	UINT y = hauteur_image(I);
+	int x = largeur_image(I);
+	int y = hauteur_image(I);
 	Image negatif = creer_image(x,y);
 	
 	for (int i = 1; i <= x; i++){

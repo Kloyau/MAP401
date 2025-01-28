@@ -2,17 +2,9 @@
 
 #include <stdio.h>
 #include <math.h>
-
+#include "geom2d.h"
 
 /*---------------- Structures ----------------*/
-
-typedef struct Vecteur_{
-  double x,y;
-} Vecteur;
-
-typedef struct Point_{
-  double x,y;
-} Point;
 
 
 /*---------------- Vecteurs ----------------*/
