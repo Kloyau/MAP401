@@ -12,6 +12,130 @@ typedef struct robot_ {
 
 } robot;
 
+typedef struct Tableau_Point_
+{
+	unsigned int taille; /* nombre d'elements dans le tableau */
+	Point *tab;          /* (pointeur vers) le tableau des elements */
+} Tableau_Point;
+
+
+/*---- le type cellule de liste de point ----*/
+typedef struct Cellule_Liste_Point_
+{
+	Point data;    /* donnee de l'element de liste */
+	struct Cellule_Liste_Point_* suiv; /* pointeur sur l'element suivant */
+} Cellule_Liste_Point;
+
+Point set_point(double x, double y)
+{
+	Point P = {x,y}; return P;
+}
+/*---- le type liste de point ----*/
+typedef struct Liste_Point_
+{
+	unsigned int taille;        /* nombre d'elements dans la liste */
+	Cellule_Liste_Point *first; /* pointeur sur le premier element de la liste */
+	Cellule_Liste_Point *last;  /* pointeur sur le dernier element de la liste */
+	                       /* first = last = NULL et taille = 0 <=> liste vide */
+} Liste_Point;
+
+typedef Liste_Point Contour; /* type Contour = type Liste_Point */
+
+
+/* creer une cellule de liste avec l'element v 
+renvoie le pointeur sur la cellule de liste creee
+   la fonction s'arrete si la creation n'a pas pu se faire */
+Cellule_Liste_Point *creer_element_liste_Point(Point v)
+{
+	Cellule_Liste_Point *el;
+	el = (Cellule_Liste_Point *)malloc(sizeof(Cellule_Liste_Point));
+	if (el==NULL)
+	{
+		fprintf(stderr, "creer_element_liste_Point : allocation impossible\n");
+		exit(-1);
+	}
+	el->data = v;
+	el->suiv = NULL;
+	return el;
+}
+/* creer une liste vide */
+Liste_Point creer_liste_Point_vide()
+{
+	Liste_Point L = {0, NULL, NULL};
+	return L;
+}
+
+/* ajouter l'element e en fin de la liste L, renvoie la liste L modifiee */
+Liste_Point ajouter_element_liste_Point(Liste_Point L, Point e)
+{
+	Cellule_Liste_Point *el;
+	
+	el = creer_element_liste_Point(e);
+	if (L.taille == 0)
+	{
+		/* premier element de la liste */
+		L.first = L.last = el;
+	}
+	else
+	{
+		L.last->suiv = el;
+		L.last = el;
+	}
+	L.taille++;
+	return L;
+}
+
+Tableau_Point sequence_points_liste_vers_tableau(Liste_Point L)
+{
+	Tableau_Point T;
+	
+	/* taille de T = taille de L */
+	T.taille = L.taille;
+	
+	/* allocation dynamique du tableau de Point */
+	T.tab = malloc(sizeof(Point) * T.taille);
+	if (T.tab == NULL)
+	{
+		/* allocation impossible : arret du programme avec un message */
+		fprintf(stderr, "sequence_points_liste_vers_tableau : ");
+		fprintf(stderr, " allocation impossible\n");
+		exit(-1);
+	}
+	
+	/* remplir le tableau de points T en parcourant la liste L */
+	int k = 0; /* indice de l'element dans T.tab */
+	Cellule_Liste_Point *el = L.first; /* pointeur sur l'element dans L */
+	while (el) 
+	{
+		T.tab[k] = el->data;
+		k++; /* incrementer k */
+		el = el->suiv; /* passer a l'element suivant dans la liste chainee */
+	}
+	
+	return T;
+}
+
+/* ecrire le contour L a l'ecran 
+cette fonction montre un exemple de conversion d'une liste de points en
+tableau de points afin de pouvoir par la suite acceder aux elements d'une
+   sequence de points par indice */
+void ecrire_contour(Liste_Point L)
+{
+	Tableau_Point TP = sequence_points_liste_vers_tableau(L);
+	int k;
+	int nP = TP.taille;
+	
+	printf("Contour avec %d points\n[", nP);
+	for (k = 0; k < nP; k++)
+	{	
+		Point P = TP.tab[k]; /* recuperer le point d'indice k */
+		printf(" (%5.1f,%5.1f)", P.x, P.y);
+	} 
+	printf("]\n");
+	
+	free(TP.tab); /* supprimer le tableau de point TP */
+}
+
 Point trouver_pixel_depart(Image I){
     int x = largeur_image(I);
 	int y = hauteur_image(I);
@@ -29,16 +153,19 @@ Point trouver_pixel_depart(Image I){
     return p;
 }
 
-void trouver_contours(Image im){
+Liste_Point trouver_contours(Image im){
     printf("Debut de la recherche de countours\n");
 
+    Liste_Point ls = creer_liste_Point_vide();
+
+    Point pt;
     Pixel pg,pd;
     Point p0 = trouver_pixel_depart(im);
     robot rob= {p0.x-1,p0.y-1, Est};
     int stop=FALSE;
     while (!stop){
-
-        printf("Orientation: %d, Position: (%d, %d)\n", rob.orient, rob.x, rob.y);
+        pt = set_point(rob.x,rob.y);
+        ls = ajouter_element_liste_Point(ls,pt);
 
         /* Avancer et calcul pixels droite-gauche*/
         if (rob.orient==Nord){
@@ -98,11 +225,12 @@ void trouver_contours(Image im){
             stop = TRUE;
         }
     }
+    return ls;
 }
 
 int main(){
     char* nom_f = "prout.pbm";
     Image im = lire_fichier_image(nom_f);
-    trouver_contours(im);
+    ecrire_contour(trouver_contours(im));
     return 0;
 }
