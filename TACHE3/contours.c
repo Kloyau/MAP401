@@ -229,8 +229,34 @@ Liste_Point trouver_contours(Image im){
 }
 
 int main(){
-    char* nom_f = "prout.pbm";
+    char* nom_f = "tete.pbm";
+    int largeur,hauteur,x,y,i;
     Image im = lire_fichier_image(nom_f);
-    ecrire_contour(trouver_contours(im));
+
+    FILE *fp;
+    fp = fopen ("contours.eps","w");
+    fprintf(fp,"%%! PS−Adobe−3.0 EPSF−3.0\n");
+    
+    largeur= largeur_image(im);
+    hauteur= hauteur_image(im);
+    fprintf(fp,"%%%%BoundingBox : 0 0 %i %i\n",largeur,hauteur);
+
+    Tableau_Point Tpts= sequence_points_liste_vers_tableau(trouver_contours(im));
+    Point pt=Tpts.tab[0];
+    fprintf(fp,"%i %i moveto ",(int)pt.x,hauteur-(int)pt.y);
+
+
+    for (i=1;i<Tpts.taille;i++){
+
+        pt=Tpts.tab[i];
+    
+        fprintf(fp,"%i %i lineto ",(int)pt.x,hauteur-(int)pt.y);
+
+    }
+
+    fprintf(fp,"\nfill\nshowpage");
+    fclose(fp);
+
+
     return 0;
 }
