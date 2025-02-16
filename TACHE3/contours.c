@@ -240,7 +240,6 @@ int main(){
     largeur= largeur_image(im);
     hauteur= hauteur_image(im);
     fprintf(fp,"%%%%BoundingBox : 0 0 %i %i\n",largeur,hauteur);
-
     Tableau_Point Tpts= sequence_points_liste_vers_tableau(trouver_contours(im));
     Point pt=Tpts.tab[0];
     fprintf(fp,"%i %i moveto ",(int)pt.x,hauteur-(int)pt.y);
@@ -254,7 +253,7 @@ int main(){
 
     }
 
-    fprintf(fp,"\nfill\nshowpage");
+    fprintf(fp,"\n0 setlinewidth stroke\nshowpage");
     fclose(fp);
 
 
