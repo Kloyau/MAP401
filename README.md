@@ -102,3 +102,7 @@ Sortie :
 **simplifiesX.eps** : contours simplifiés (1 ≤ X ≤ seuil)
 
 **bezierX.eps** : version lissée par courbes de Bézier (1 ≤ X ≤ seuil)
+
+# Diagramme de Gants et Journal de Bord 
+
+```https://docs.google.com/spreadsheets/d/1hn9W-QfXijcGs4zlYm8DVTJOehK-ITX7/edit?usp=sharing&ouid=114012893032931909720&rtpof=true&sd=true```
