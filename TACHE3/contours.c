@@ -247,22 +247,19 @@ Liste_Point trouver_contours(Image im, Image M) {
 }
 
 int main(int argc, char *argv[]) {
-    if (argc < 3) {
-        fprintf(stderr, "Usage: %s <image.pbm> <seuil (max %.1f)>\n", argv[0], (double)MAX_SEUIL);
+    if (argc < 2) {
+        fprintf(stderr, "Usage: %s <image.pbm>\n", argv[0]);
         return 1;
     }
 
-    char *nom_image = argv[1];
-    double seuil = atof(argv[2]);
-    if (seuil <= 0 || seuil > MAX_SEUIL) {
-        fprintf(stderr, "Erreur: seuil doit être > 0 et <= %.1f\n", (double)MAX_SEUIL);
-        return 1;
-    }
-    Image im = lire_fichier_image(nom_image);
+    const double seuil_simplification = 1.5;
+
+    Image im = lire_fichier_image(argv[1]);
     Image M = creer_masque(im);
-    int nbContours = 0, largeur = largeur_image(im), hauteur = hauteur_image(im);
+    int nbContours = 0, total_segments = 0;
+    int largeur = largeur_image(im), hauteur = hauteur_image(im);
     Liste_Point contours[100];
-    Liste_Point contours_simplifies[MAX_SEUIL + 1][100];
+    Liste_Point contours_simplifies[100];
 
     while (1) {
         Liste_Point c = trouver_contours(im, M);
@@ -270,59 +267,74 @@ int main(int argc, char *argv[]) {
         contours[nbContours++] = c;
     }
 
-    FILE *fp;
-
-    // tache 5
-    fp = fopen("contours.eps", "w");
+    // Tâche 5 : Contours bruts
+    FILE *fp = fopen("contours.eps", "w");
     fprintf(fp, "%%!PS-Adobe-3.0 EPSF-3.0\n%%%%BoundingBox: 0 0 %d %d\n", largeur, hauteur);
     for (int i = 0; i < nbContours; i++) {
         Tableau_Point TP = sequence_points_liste_vers_tableau(contours[i]);
-        fprintf(fp, "%d %d moveto ", (int)TP.tab[0].x, hauteur - (int)TP.tab[0].y);
-        for (int j = 1; j < TP.taille; j++)
-            fprintf(fp, "%d %d lineto ", (int)TP.tab[j].x, hauteur - (int)TP.tab[j].y);
-        fprintf(fp, "closepath\n");
+        total_segments += TP.taille - 1;
+        if (TP.taille > 0) {
+            fprintf(fp, "%d %d moveto ", (int)TP.tab[0].x, hauteur - (int)TP.tab[0].y);
+            for (int j = 1; j < TP.taille; j++)
+                fprintf(fp, "%d %d lineto ", (int)TP.tab[j].x, hauteur - (int)TP.tab[j].y);
+            fprintf(fp, "closepath\n");
+        }
+        free(TP.tab);
     }
-    fprintf(fp, "fill\nshowpage\n"); 
+    fprintf(fp, "fill\nshowpage\n");
     fclose(fp);
 
-    for (int seuil = 1; seuil <= MAX_SEUIL; seuil++) {
-        char nom_fichier[64];
+    printf("Tâche 5 : %d contours extraits, %d segments au total\n", nbContours, total_segments);
 
-        // tache 6
-        snprintf(nom_fichier, sizeof(nom_fichier), "simplifies%d.eps", seuil);
-        FILE *fp_simpl = fopen(nom_fichier, "w");
-        fprintf(fp_simpl, "%%!PS-Adobe-3.0 EPSF-3.0\n%%%%BoundingBox: 0 0 %d %d\n", largeur, hauteur);
+    // Tâche 6 : Simplification
+    FILE *fp_s = fopen("contours_simplifies.eps", "w");
+    fprintf(fp_s, "%%!PS-Adobe-3.0 EPSF-3.0\n%%%%BoundingBox: 0 0 %d %d\n", largeur, hauteur);
 
-        for (int i = 0; i < nbContours; i++) {
-            contours_simplifies[seuil - 1][i] = simplifier_contour_depuis_eps(contours[i], (double)seuil);
-            Tableau_Point TP = sequence_points_liste_vers_tableau(contours_simplifies[seuil - 1][i]);
-            if (TP.taille > 0) {
-                fprintf(fp_simpl, "%d %d moveto ", (int)TP.tab[0].x, hauteur - (int)TP.tab[0].y);
-                for (int j = 1; j < TP.taille; j++) {
-                    fprintf(fp_simpl, "%d %d lineto ", (int)TP.tab[j].x, hauteur - (int)TP.tab[j].y);
-                }
-                fprintf(fp_simpl, "closepath\nfill\n");
-            }
-            free(TP.tab);
+    int total_simplified_segments = 0;
+    for (int i = 0; i < nbContours; i++) {
+        contours_simplifies[i] = simplifier_contour_depuis_eps(contours[i], seuil_simplification);
+        Tableau_Point TP = sequence_points_liste_vers_tableau(contours_simplifies[i]);
+        total_simplified_segments += TP.taille - 1;
+        if (TP.taille > 0) {
+            fprintf(fp_s, "%d %d moveto ", (int)TP.tab[0].x, hauteur - (int)TP.tab[0].y);
+            for (int j = 1; j < TP.taille; j++)
+                fprintf(fp_s, "%d %d lineto ", (int)TP.tab[j].x, hauteur - (int)TP.tab[j].y);
+            fprintf(fp_s, "closepath\nfill\n");
         }
-        fprintf(fp_simpl, "showpage\n");
-        fclose(fp_simpl);
-
-        // tache 7
-        snprintf(nom_fichier, sizeof(nom_fichier), "bezier%d.eps", seuil);
-        FILE *fp_bez = fopen(nom_fichier, "w");
-        fprintf(fp_bez, "%%!PS-Adobe-3.0 EPSF-3.0\n%%%%BoundingBox: 0 0 %d %d\n", largeur, hauteur);
-
-        for (int i = 0; i < nbContours; i++) {
-            Tableau_Point TP_simplifie = sequence_points_liste_vers_tableau(contours_simplifies[seuil - 1][i]);
-            if (TP_simplifie.taille > 1) {
-                ecrire_bezier_eps(TP_simplifie, fp_bez, hauteur);
-            }
-            free(TP_simplifie.tab);
-        }
-        fprintf(fp_bez, "showpage\n");
-        fclose(fp_bez);
+        free(TP.tab);
     }
+    fprintf(fp_s, "showpage\n");
+    fclose(fp_s);
+
+    printf("Tâche 6 : %d segments après simplification (réduction %.2f%%)\n",
+            total_simplified_segments,
+            100.0 * (total_segments - total_simplified_segments) / total_segments);
+
+    // Tâche 7 : Bézier (à partir de la version simplifiée)
+    FILE *fp_b = fopen("contours_bezier.eps", "w");
+    fprintf(fp_b, "%%!PS-Adobe-3.0 EPSF-3.0\n%%%%BoundingBox: 0 0 %d %d\n", largeur, hauteur);
+
+    int total_beziers = 0;
+    for (int i = 0; i < nbContours; i++) {
+        Tableau_Point TP = sequence_points_liste_vers_tableau(contours_simplifies[i]);
+        if (TP.taille >= 4) {
+            fprintf(fp_b, "%d %d moveto\n", (int)TP.tab[0].x, hauteur - (int)TP.tab[0].y);
+            for (int j = 1; j + 2 < TP.taille; j += 3) {
+                fprintf(fp_b, "%d %d %d %d %d %d curveto\n",
+                        (int)TP.tab[j].x, hauteur - (int)TP.tab[j].y,
+                        (int)TP.tab[j+1].x, hauteur - (int)TP.tab[j+1].y,
+                        (int)TP.tab[j+2].x, hauteur - (int)TP.tab[j+2].y);
+                total_beziers++;
+            }
+            fprintf(fp_b, "closepath\nfill\n");
+        }
+        free(TP.tab);
+    }
+
+    fprintf(fp_b, "showpage\n");
+    fclose(fp_b);
+
+    printf("Tâche 7 : %d courbes de Bézier cubiques générées\n", total_beziers);
 
     return 0;
 }
