@@ -267,7 +267,7 @@ int main(int argc, char *argv[]) {
         contours[nbContours++] = c;
     }
 
-    // Tâche 5 : Contours bruts
+    // tahce 5
     FILE *fp = fopen("contours.eps", "w");
     fprintf(fp, "%%!PS-Adobe-3.0 EPSF-3.0\n%%%%BoundingBox: 0 0 %d %d\n", largeur, hauteur);
     for (int i = 0; i < nbContours; i++) {
@@ -286,8 +286,8 @@ int main(int argc, char *argv[]) {
 
     printf("Tâche 5 : %d contours extraits, %d segments au total\n", nbContours, total_segments);
 
-    // Tâche 6 : Simplification
-    FILE *fp_s = fopen("contours_simplifies.eps", "w");
+    // tache 6
+    FILE *fp_s = fopen("simplifies.eps", "w");
     fprintf(fp_s, "%%!PS-Adobe-3.0 EPSF-3.0\n%%%%BoundingBox: 0 0 %d %d\n", largeur, hauteur);
 
     int total_simplified_segments = 0;
@@ -301,7 +301,6 @@ int main(int argc, char *argv[]) {
                 fprintf(fp_s, "%d %d lineto ", (int)TP.tab[j].x, hauteur - (int)TP.tab[j].y);
             fprintf(fp_s, "closepath\nfill\n");
         }
-        free(TP.tab);
     }
     fprintf(fp_s, "showpage\n");
     fclose(fp_s);
@@ -310,8 +309,8 @@ int main(int argc, char *argv[]) {
             total_simplified_segments,
             100.0 * (total_segments - total_simplified_segments) / total_segments);
 
-    // Tâche 7 : Bézier (à partir de la version simplifiée)
-    FILE *fp_b = fopen("contours_bezier.eps", "w");
+    // tache 7
+    FILE *fp_b = fopen("bezier.eps", "w");
     fprintf(fp_b, "%%!PS-Adobe-3.0 EPSF-3.0\n%%%%BoundingBox: 0 0 %d %d\n", largeur, hauteur);
 
     int total_beziers = 0;
@@ -328,7 +327,6 @@ int main(int argc, char *argv[]) {
             }
             fprintf(fp_b, "closepath\nfill\n");
         }
-        free(TP.tab);
     }
 
     fprintf(fp_b, "showpage\n");
