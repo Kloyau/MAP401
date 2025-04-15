@@ -105,4 +105,4 @@ Sortie :
 
 # Diagramme de Gants et Journal de Bord 
 
-```https://docs.google.com/spreadsheets/d/1hn9W-QfXijcGs4zlYm8DVTJOehK-ITX7/edit?usp=sharing&ouid=114012893032931909720&rtpof=true&sd=true```
+[Google Sheet](https://docs.google.com/spreadsheets/d/1hn9W-QfXijcGs4zlYm8DVTJOehK-ITX7/edit?usp=sharing&ouid=114012893032931909720&rtpof=true&sd=true)
