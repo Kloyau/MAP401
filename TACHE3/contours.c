@@ -4,6 +4,9 @@
 #include "image.h"
 #include "geom2d.h"
 
+#define MAX_SEUIL 10
+
+
 typedef enum {Nord, Est, Sud, Ouest} orientation;
 typedef struct robot_ {
     int x, y;
@@ -15,7 +18,6 @@ typedef struct Tableau_Point_ {
     Point *tab;           /* tableau des points */
 } Tableau_Point;
 
-/*---- cellule et liste chaînée de points ----*/
 typedef struct Cellule_Liste_Point_ {
     Point data;
     struct Cellule_Liste_Point_* suiv;
@@ -124,10 +126,63 @@ Point trouver_pixel_depart(Image I, Image M) {
     return p;
 }
 
-/* Extraction d'un contour unique en utilisant la méthode du robot et le masque M.
-Lorsqu'un pixel candidat est utilisé, on le marque dans M en le passant à BLANC.
-La conversion des coordonnées du robot en coordonnées d'image se fait en ajoutant 1.
-*/
+double distance_point_segment(Point P, Point A, Point B) {
+    double ABx = B.x - A.x, ABy = B.y - A.y;
+    double APx = P.x - A.x, APy = P.y - A.y;
+    double ab2 = ABx * ABx + ABy * ABy;
+    double t = ab2 == 0 ? 0 : fmax(0, fmin(1, (APx * ABx + APy * ABy) / ab2));
+    double closestX = A.x + t * ABx, closestY = A.y + t * ABy;
+    return hypot(P.x - closestX, P.y - closestY);
+}
+
+Liste_Point simplifier_contour_depuis_eps(Liste_Point L, double seuil) {
+    Tableau_Point TP = sequence_points_liste_vers_tableau(L);
+    Liste_Point Ls = creer_liste_Point_vide();
+
+    if (TP.taille < 2) return Ls;
+
+    int i = 0;
+    Ls = ajouter_element_liste_Point(Ls, TP.tab[0]);
+    while (i < TP.taille - 1) {
+        int j = i + 1;
+        while (j < TP.taille) {
+            int valide = 1;
+            for (int k = i + 1; k < j; k++) {
+                if (distance_point_segment(TP.tab[k], TP.tab[i], TP.tab[j]) > seuil) {
+                    valide = 0;
+                    break;
+                }
+            }
+            if (!valide) break;
+            j++;
+        }
+        j--;
+        Ls = ajouter_element_liste_Point(Ls, TP.tab[j]);
+        i = j;
+    }
+    free(TP.tab);
+    return Ls;
+}
+void ecrire_bezier_eps(Tableau_Point TP, FILE *fp, int hauteur) {
+    if (TP.taille < 2) return;
+
+    fprintf(fp, "%d %d moveto\n", (int)TP.tab[0].x, hauteur - (int)TP.tab[0].y);
+
+    for (int i = 0; i < TP.taille - 1; i++) {
+        Point A = TP.tab[i];
+        Point B = TP.tab[i + 1];
+
+        Point C1 = { A.x + (B.x - A.x) / 3.0, A.y + (B.y - A.y) / 3.0 };
+        Point C2 = { A.x + 2 * (B.x - A.x) / 3.0, A.y + 2 * (B.y - A.y) / 3.0 };
+
+        fprintf(fp, "%d %d %d %d %d %d curveto\n",
+                (int)C1.x, hauteur - (int)C1.y,
+                (int)C2.x, hauteur - (int)C2.y,
+                (int)B.x,  hauteur - (int)B.y);
+    }
+
+    fprintf(fp, "closepath\nfill\n");
+}
 Liste_Point trouver_contours(Image im, Image M) {
     printf("Debut de l'extraction d'un contour via le masque M\n");
     Liste_Point ls = creer_liste_Point_vide();
@@ -165,7 +220,6 @@ Liste_Point trouver_contours(Image im, Image M) {
             pd = get_pixel_image(im, rob.x, rob.y);
         }
         
-        /* Calcul de la nouvelle orientation selon les valeurs des pixels voisins */
         if (pg == NOIR) {
             if (rob.orient == Nord)
                 rob.orient = Ouest;
@@ -192,53 +246,83 @@ Liste_Point trouver_contours(Image im, Image M) {
     return ls;
 }
 
-int main() {
-    char* nom_f = "animaux.pbm";
-    int largeur, hauteur, i, total_segments = 0;
-    int nbContours = 0;
-    Image im = lire_fichier_image(nom_f);
-    
+int main(int argc, char *argv[]) {
+    if (argc < 3) {
+        fprintf(stderr, "Usage: %s <image.pbm> <seuil (max %.1f)>\n", argv[0], (double)MAX_SEUIL);
+        return 1;
+    }
+
+    char *nom_image = argv[1];
+    double seuil = atof(argv[2]);
+    if (seuil <= 0 || seuil > MAX_SEUIL) {
+        fprintf(stderr, "Erreur: seuil doit être > 0 et <= %.1f\n", (double)MAX_SEUIL);
+        return 1;
+    }
+    Image im = lire_fichier_image(nom_image);
     Image M = creer_masque(im);
-    
+    int nbContours = 0, largeur = largeur_image(im), hauteur = hauteur_image(im);
     Liste_Point contours[100];
-    
+    Liste_Point contours_simplifies[MAX_SEUIL + 1][100];
+
     while (1) {
-        Liste_Point contour = trouver_contours(im, M);
-        if (contour.taille == 0)
-            break;
-        contours[nbContours++] = contour;
+        Liste_Point c = trouver_contours(im, M);
+        if (c.taille == 0) break;
+        contours[nbContours++] = c;
     }
-    printf("Nombre de contours extraits : %d\n", nbContours);
-    for (i = 0; i < nbContours; i++) {
-        ecrire_contour(contours[i]);
-        if (contours[i].taille > 0)
-            total_segments += (contours[i].taille - 1);
-    }
-    printf("Nombre total de segments : %d\n", total_segments);
-    
-    FILE *fp = fopen("contours.eps", "w");
 
-    fprintf(fp, "%%! PS-Adobe-3.0 EPSF-3.0\n");
-    largeur = largeur_image(im);
-    hauteur = hauteur_image(im);
-    fprintf(fp, "%%%%BoundingBox: 0 0 %i %i\n", largeur, hauteur);
-    for (i = 0; i < nbContours; i++) {
+    FILE *fp;
 
+    // tache 5
+    fp = fopen("contours.eps", "w");
+    fprintf(fp, "%%!PS-Adobe-3.0 EPSF-3.0\n%%%%BoundingBox: 0 0 %d %d\n", largeur, hauteur);
+    for (int i = 0; i < nbContours; i++) {
         Tableau_Point TP = sequence_points_liste_vers_tableau(contours[i]);
-
-        if (TP.taille > 0) {
-            Point pt = TP.tab[0];
-            fprintf(fp, "%i %i moveto ", (int)pt.x, hauteur - (int)pt.y);
-            for (int j = 1; j < TP.taille; j++) {
-                pt = TP.tab[j];
-                fprintf(fp, "%i %i lineto ", (int)pt.x, hauteur - (int)pt.y);
-            }
-            fprintf(fp, "closepath\n");
-        }
+        fprintf(fp, "%d %d moveto ", (int)TP.tab[0].x, hauteur - (int)TP.tab[0].y);
+        for (int j = 1; j < TP.taille; j++)
+            fprintf(fp, "%d %d lineto ", (int)TP.tab[j].x, hauteur - (int)TP.tab[j].y);
+        fprintf(fp, "closepath\n");
     }
-    fprintf(fp, "\n0 setlinewidth stroke\nshowpage");
+    fprintf(fp, "fill\nshowpage\n"); 
     fclose(fp);
 
-    
+    for (int seuil = 1; seuil <= MAX_SEUIL; seuil++) {
+        char nom_fichier[64];
+
+        // tache 6
+        snprintf(nom_fichier, sizeof(nom_fichier), "simplifies%d.eps", seuil);
+        FILE *fp_simpl = fopen(nom_fichier, "w");
+        fprintf(fp_simpl, "%%!PS-Adobe-3.0 EPSF-3.0\n%%%%BoundingBox: 0 0 %d %d\n", largeur, hauteur);
+
+        for (int i = 0; i < nbContours; i++) {
+            contours_simplifies[seuil - 1][i] = simplifier_contour_depuis_eps(contours[i], (double)seuil);
+            Tableau_Point TP = sequence_points_liste_vers_tableau(contours_simplifies[seuil - 1][i]);
+            if (TP.taille > 0) {
+                fprintf(fp_simpl, "%d %d moveto ", (int)TP.tab[0].x, hauteur - (int)TP.tab[0].y);
+                for (int j = 1; j < TP.taille; j++) {
+                    fprintf(fp_simpl, "%d %d lineto ", (int)TP.tab[j].x, hauteur - (int)TP.tab[j].y);
+                }
+                fprintf(fp_simpl, "closepath\nfill\n");
+            }
+            free(TP.tab);
+        }
+        fprintf(fp_simpl, "showpage\n");
+        fclose(fp_simpl);
+
+        // tache 7
+        snprintf(nom_fichier, sizeof(nom_fichier), "bezier%d.eps", seuil);
+        FILE *fp_bez = fopen(nom_fichier, "w");
+        fprintf(fp_bez, "%%!PS-Adobe-3.0 EPSF-3.0\n%%%%BoundingBox: 0 0 %d %d\n", largeur, hauteur);
+
+        for (int i = 0; i < nbContours; i++) {
+            Tableau_Point TP_simplifie = sequence_points_liste_vers_tableau(contours_simplifies[seuil - 1][i]);
+            if (TP_simplifie.taille > 1) {
+                ecrire_bezier_eps(TP_simplifie, fp_bez, hauteur);
+            }
+            free(TP_simplifie.tab);
+        }
+        fprintf(fp_bez, "showpage\n");
+        fclose(fp_bez);
+    }
+
     return 0;
 }

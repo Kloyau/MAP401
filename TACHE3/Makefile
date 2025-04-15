@@ -3,7 +3,7 @@ EXEC = contours
 
 # Compilateur et options
 CC = gcc
-CFLAGS = -Wall -Wextra -std=c99 -lm -I.  # -I. pour inclure les répertoires actuels des headers
+CFLAGS = -std=c99 -O2 -I. -w  # -w désactive tous les warnings
 
 # Fichiers source
 SRC = geom2d.c image.c contours.c
